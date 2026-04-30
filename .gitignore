@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Scratch / test files in this directory (not part of the package)
+namd_trajectories/
+trajectories/
+wigner-*/
+spectrum/
+spectrum2/
+calc/
+qp/
+namd/
+Nac_run/
+formal/
+geodesic-interpolate/
+hess_m_num_hess/
+hess_num_hess/
+tmp_OpenQP/
+input/
+*.bk
+bk*/
+bk1*
+*.log
+*.out
+*.err
+*.inp
+*.xyz
+*.pdb
+*.json
+*.pkl
+*.png
+*.dat
+*.molden
+*.status
+*.sh
+*.velocity
+*.init
+
+# Allow pyproject.toml and the package templates
+!opensm/templates/*.json
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude Code session data
+opensm/session/

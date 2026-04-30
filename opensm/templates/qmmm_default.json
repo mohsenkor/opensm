@@ -1,0 +1,37 @@
+{
+  "description": "QM/MM with OpenMM (MRSF-TDDFT)",
+  "mode": "qmmm",
+  "sections": {
+    "input": {
+      "functional": "bhhlyp",
+      "basis": "6-31g*",
+      "method": "tdhf",
+      "qmmm_flag": true
+    },
+    "scf": {
+      "type": "rohf",
+      "maxit": 100,
+      "multiplicity": 1
+    },
+    "guess": {
+      "type": "huckel"
+    },
+    "dftgrid": {
+      "rad_type": "becke"
+    },
+    "tdhf": {
+      "type": "mrsf",
+      "nstate": 6
+    },
+    "qmmm": {
+      "pdb_file": "",
+      "forcefield_files": "amber14-all.xml",
+      "qm_atoms": "",
+      "cutoff": "PME",
+      "embedding": "electrostatic",
+      "n_steps": 1000,
+      "timestep": 1.0,
+      "temperature": 300.0
+    }
+  }
+}

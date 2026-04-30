@@ -1,0 +1,24 @@
+{
+  "description": "Pure QM single-point calculation",
+  "mode": "qp",
+  "sections": {
+    "input": {
+      "functional": "bhhlyp",
+      "basis": "6-31g*",
+      "method": "hf",
+      "runtype": "energy",
+      "charge": 0
+    },
+    "scf": {
+      "type": "rhf",
+      "maxit": 100,
+      "multiplicity": 1
+    },
+    "guess": {
+      "type": "huckel"
+    },
+    "dftgrid": {
+      "rad_type": "becke"
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "description": "Non-adiabatic MD with PyRAI2MD (MRSF-TDDFT)",
+  "mode": "namd",
+  "sections": {
+    "input": {
+      "functional": "bhhlyp",
+      "charge": 0,
+      "method": "tdhf",
+      "basis": "6-31G*"
+    },
+    "guess": {
+      "type": "huckel"
+    },
+    "scf": {
+      "type": "rohf",
+      "maxit": 200,
+      "multiplicity": 3,
+      "converger_type": "soscf",
+      "conv": "1e-8"
+    },
+    "tdhf": {
+      "type": "mrsf",
+      "nstate": 6,
+      "maxit": 100,
+      "maxit_zv": 200,
+      "nvdav": 100,
+      "zvconv": "1.0e-10"
+    },
+    "dftgrid": {
+      "rad_npts": 96,
+      "ang_npts": 302,
+      "pruned": ""
+    },
+    "properties": {
+      "export": true,
+      "nac": "nacme",
+      "back_door": true,
+      "grad": 5
+    },
+    "nac": {}
+  },
+  "namd": {
+    "control": {
+      "qc_ncpu": 16,
+      "gl_seed": 1,
+      "jobtype": "md",
+      "qm": "openqp",
+      "abinit": "openqp"
+    },
+    "molecule": {
+      "ci": 5,
+      "spin": 0,
+      "coupling": "1 2, 1 3, 1 4, 1 5, 2 3, 2 4, 2 5, 3 4, 3 5, 4 5"
+    },
+    "openqp": {
+      "openqp": "",
+      "threads": 40,
+      "use_hpc": -1,
+      "align_mo": 1
+    },
+    "md": {
+      "initcond": 0,
+      "temp": 300,
+      "randvelo": 0,
+      "step": 80,
+      "direct": 80,
+      "checkpoint": 1,
+      "buffer": 0,
+      "size": 20.67,
+      "root": 5,
+      "activestate": 1,
+      "sfhp": "fssh",
+      "nactype": "dcm",
+      "phasecheck": 0,
+      "adjust": 0,
+      "reflect": 1,
+      "deco": "OFF",
+      "substep": 20,
+      "verbose": 1,
+      "thermo": 0,
+      "restart": ""
+    }
+  }
+}

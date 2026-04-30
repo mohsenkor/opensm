@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "opensm"
+version = "0.1.0"
+description = "Unified interface for multi-scale quantum chemistry simulations (QM, QM/MM, NAMD, NAMD+QM/MM) using OpenQP"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+authors = [
+    { name = "Mohsen Azaherifar", email = "mazaherifar.m@gmail.com" },
+]
+keywords = ["quantum chemistry", "molecular dynamics", "NAMD", "QM/MM", "OpenQP", "MRSF-TDDFT"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib"]
+all  = ["matplotlib"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["opensm*"]
+
+[tool.setuptools.package-data]
+opensm = ["templates/*.json"]
