@@ -573,7 +573,8 @@ class SimulationManager:
         })
         return result
 
-    def submit(self, workflow_step=None, script_path=None):
+    def submit(self, workflow_step=None, script_path=None,
+               wait=False, poll_interval=60):
         """
         Submit batch jobs by running a submit_all.sh script.
 
@@ -588,12 +589,23 @@ class SimulationManager:
             'batch' / 'batch_from_wigner'.  If None, auto-detects.
         script_path : str or Path, optional
             Explicit path to submit_all.sh (overrides auto-detection).
+        wait : bool
+            If True, block until all submitted jobs finish (SLURM only).
+            Polls ``squeue`` every ``poll_interval`` seconds.
+        poll_interval : int
+            Seconds between squeue polls when wait=True (default 60).
+
+        Returns
+        -------
+        list of str
+            SLURM job IDs that were submitted (empty list for PBS/unknown).
 
         Example
         -------
             manager.absorption_batch(partition="compute")
-            manager.submit()  # runs absorption/submit_all.sh
+            manager.submit(wait=True)   # blocks until all jobs done
         """
+        import re
         import subprocess
 
         if script_path is not None:
@@ -638,8 +650,41 @@ class SimulationManager:
         if result.returncode != 0:
             print(f"Error (exit code {result.returncode}):")
             print(result.stderr)
-        else:
-            print("All jobs submitted successfully.")
+            return []
+
+        # Parse SLURM job IDs from sbatch output lines like:
+        #   "Submitted batch job 12345"
+        job_ids = re.findall(r"Submitted batch job (\d+)", result.stdout)
+        print(f"Submitted {len(job_ids)} jobs successfully."
+              if job_ids else "All jobs submitted successfully.")
+
+        if wait:
+            self._wait_for_jobs(job_ids, poll_interval=poll_interval)
+
+        return job_ids
+
+    def _wait_for_jobs(self, job_ids, poll_interval=60):
+        """Block until all SLURM job IDs have left the queue."""
+        import time
+        import subprocess
+
+        if not job_ids:
+            print("No job IDs to wait for.")
+            return
+
+        print(f"Waiting for {len(job_ids)} jobs to finish "
+              f"(polling every {poll_interval}s)...")
+        while True:
+            result = subprocess.run(
+                ["squeue", "-j", ",".join(job_ids), "-h"],
+                capture_output=True, text=True,
+            )
+            running = [l for l in result.stdout.splitlines() if l.strip()]
+            if not running:
+                print("All jobs completed.")
+                break
+            print(f"  {len(running)} job(s) still running...")
+            time.sleep(poll_interval)
 
     def absorption_spectrum(
         self, base_folder=None, initial_state=1,
