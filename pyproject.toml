@@ -27,6 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "pyopenqp @ git+https://github.com/Open-Quantum-Platform/openqp.git",
     "PyRAI2MD @ git+https://github.com/mlcclab/PyRAI2MD-hiam.git",
     "geodesic_interpolate @ git+https://github.com/virtualzx-nad/geodesic-interpolate.git",
 ]

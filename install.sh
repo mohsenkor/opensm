@@ -19,6 +19,12 @@ echo "=============================================="
 echo " Repo: $REPO_DIR"
 echo "=============================================="
 
+# ── 0. Upgrade pip ───────────────────────────────
+echo ""
+echo "[0/2] Upgrading pip..."
+pip install --upgrade pip
+echo "  Done."
+
 # ── 1. Install opensm + all dependencies ─────────
 echo ""
 echo "[1/2] Installing opensm and dependencies..."
@@ -27,7 +33,7 @@ echo "  Done."
 
 # ── 2. Compile fssh library ───────────────────────
 echo ""
-echo "[2/2] Compiling fssh library (pyrai2md update)..."
+echo "[2/2] Compiling PyRAI2MD fssh library (pyrai2md update)..."
 pyrai2md update
 echo "  Done."
 
