@@ -161,81 +161,15 @@ class SimulationManager:
         self._setup_files()
 
     # ================================================================
-    #  Default sections / NAMD params
+    #  Default sections / NAMD params  (loaded from built-in templates)
     # ================================================================
     def _default_sections(self):
-        if self.mode == "qp":
-            return {
-                "input": {"functional": "bhhlyp", "basis": "6-31g*",
-                          "method": "hf", "runtype": "energy", "charge": 0},
-                "scf": {"type": "rhf", "maxit": 100, "multiplicity": 1},
-                "guess": {"type": "huckel"},
-                "dftgrid": {"rad_type": "becke"},
-            }
-        if self.mode == "qmmm":
-            return {
-                "input": {"functional": "bhhlyp", "basis": "6-31g*",
-                          "method": "tdhf", "qmmm_flag": True},
-                "scf": {"type": "rohf", "maxit": 200, "multiplicity": 3,
-                        "converger_type": "soscf", "conv": "1e-8"},
-                "guess": {"type": "huckel"},
-                "dftgrid": {"rad_npts": 96, "ang_npts": 302, "pruned": ""},
-                "tdhf": {"type": "mrsf", "nstate": 6, "maxit": 100,
-                         "maxit_zv": 200, "nvdav": 100, "zvconv": "1.0e-10"},
-                "qmmm": {"pdb_file": "", "forcefield_files": "amber14-all.xml",
-                         "qm_atoms": "", "cutoff": "PME",
-                         "embedding": "electrostatic", "n_steps": 1000,
-                         "timestep": 1.0, "temperature": 300.0},
-            }
-        if self.mode == "namd":
-            return {
-                "input": {"functional": "bhhlyp", "charge": 0,
-                          "method": "tdhf", "basis": "6-31G*"},
-                "guess": {"type": "huckel"},
-                "scf": {"type": "rohf", "maxit": 200, "multiplicity": 3,
-                        "converger_type": "soscf", "conv": "1e-8"},
-                "tdhf": {"type": "mrsf", "nstate": 6, "maxit": 100,
-                         "maxit_zv": 200, "nvdav": 100, "zvconv": "1.0e-10"},
-                "dftgrid": {"rad_npts": 96, "ang_npts": 302, "pruned": ""},
-                "properties": {"export": True, "nac": "nacme",
-                               "back_door": True, "grad": 5},
-                "nac": {},
-            }
-        if self.mode == "namd_qmmm":
-            return {
-                "input": {"functional": "bhhlyp", "charge": 0,
-                          "method": "tdhf", "basis": "6-31G*",
-                          "qmmm_flag": True},
-                "guess": {"type": "huckel"},
-                "scf": {"type": "rohf", "maxit": 200, "multiplicity": 3,
-                        "converger_type": "soscf", "conv": "1e-8"},
-                "tdhf": {"type": "mrsf", "nstate": 6, "maxit": 100,
-                         "maxit_zv": 200, "nvdav": 100, "zvconv": "1.0e-10"},
-                "dftgrid": {"rad_npts": 96, "ang_npts": 302, "pruned": ""},
-                "properties": {"export": True, "nac": "nacme",
-                               "back_door": True, "grad": 5},
-                "nac": {},
-                "qmmm": {"pdb_file": "", "forcefield_files": "amber14-all.xml",
-                         "qm_atoms": "", "cutoff": "PME",
-                         "embedding": "electrostatic", "n_steps": 1000,
-                         "timestep": 1.0, "temperature": 300.0},
-            }
-        return {}
+        tpl = BUILTIN_TEMPLATES.get(f"{self.mode}_default", {})
+        return deepcopy(tpl.get("sections", {}))
 
     def _default_namd(self):
-        return {
-            "control": {"qc_ncpu": 16, "gl_seed": 1, "jobtype": "md",
-                        "qm": "openqp", "abinit": "openqp"},
-            "molecule": {"ci": 5, "spin": 0,
-                         "coupling": "1 2, 1 3, 1 4, 1 5, 2 3, 2 4, 2 5, 3 4, 3 5, 4 5"},
-            "openqp": {"openqp": "", "threads": 40, "use_hpc": -1, "align_mo": 1},
-            "md": {"initcond": 0, "temp": 300, "randvelo": 0,
-                   "step": 80, "direct": 80, "checkpoint": 1, "buffer": 0,
-                   "size": 20.67, "root": 5, "activestate": 1,
-                   "sfhp": "fssh", "nactype": "dcm", "phasecheck": 0,
-                   "adjust": 0, "reflect": 1, "deco": "OFF",
-                   "substep": 20, "verbose": 1, "thermo": 0, "restart": ""},
-        }
+        tpl = BUILTIN_TEMPLATES.get(f"{self.mode}_default", {})
+        return deepcopy(tpl.get("namd", {}))
 
     # ================================================================
     #  Dependency checking

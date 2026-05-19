@@ -32,12 +32,6 @@ Or use the provided script which does both steps:
 bash install.sh
 ```
 
-### Set environment variable (required for NAMD modes)
-
-```bash
-export OPENQP_ROOT=/path/to/openqp
-```
-
 ### Check dependencies
 
 ```python
@@ -192,21 +186,118 @@ manager.select_wigner_window(w_min=290, w_max=310, target_state=2)
 
 ## Template System
 
-Built-in templates (`qp_default`, `qmmm_default`, `namd_default`,
-`namd_qmmm_default`) provide reasonable defaults for each mode.
+All default settings live in JSON files inside `opensm/templates/`.
+Built-in templates are loaded automatically at import time — there are no
+hardcoded defaults in Python code.
+
+| Template | Mode | Description |
+|----------|------|-------------|
+| `qp_default` | `qp` | Pure QM single-point |
+| `qmmm_default` | `qmmm` | QM/MM with OpenMM |
+| `namd_default` | `namd` | Non-adiabatic MD |
+| `namd_qmmm_default` | `namd_qmmm` | NAMD with QM/MM |
+
+### Use a built-in template
 
 ```python
-# Instantiate from a built-in template
 manager = SimulationManager.from_template(
     "namd_default", folder="run", title="mol", xyz="mol.xyz"
 )
-
-# List available templates
-SimulationManager.list_templates()
-
-# Save current settings as a reusable template
-manager.save_template("my_template.json")
 ```
+
+`SimulationManager(mode="namd", ...)` without a `template=` argument also
+loads `namd_default` automatically.
+
+### List available templates
+
+```python
+SimulationManager.list_templates()           # built-ins + any *.json in cwd
+SimulationManager.list_templates("/my/dir")  # scan a specific directory
+```
+
+### Save current settings as a new template
+
+```python
+manager.save_template("my_mol_template.json", description="Formaldehyde NAMD")
+```
+
+This writes a JSON file you can reuse in any future project.
+
+### Create a template from scratch (no manager needed)
+
+```python
+SimulationManager.create_template(
+    "custom_namd.json",
+    mode="namd",
+    sections={
+        "input":  {"functional": "bhhlyp", "basis": "6-31G*",
+                   "method": "tdhf", "charge": 0},
+        "scf":    {"type": "rohf", "multiplicity": 3,
+                   "converger_type": "soscf", "conv": "1e-8"},
+        "tdhf":   {"type": "mrsf", "nstate": 3},
+        "dftgrid":{"rad_npts": 96, "ang_npts": 302, "pruned": ""},
+        "properties": {"export": True, "nac": "nacme",
+                       "back_door": True, "grad": 3},
+        "nac": {},
+    },
+    namd={
+        "control":  {"qc_ncpu": 16, "jobtype": "md",
+                     "qm": "openqp", "abinit": "openqp"},
+        "molecule": {"ci": 3, "spin": 0, "coupling": "1 2, 1 3, 2 3"},
+        "openqp":   {"threads": 16, "use_hpc": -1, "align_mo": 1},
+        "md": {"step": 5000, "size": 20.67, "root": 2,
+               "sfhp": "fssh", "nactype": "dcm",
+               "deco": "OFF", "substep": 20},
+    },
+    description="Custom 3-state NAMD for small molecules",
+)
+```
+
+### Use a custom template
+
+```python
+# From a JSON file in the current directory or any path
+manager = SimulationManager.from_template(
+    "custom_namd.json", folder="run", title="mol", xyz="mol.xyz"
+)
+
+# Or pass the path explicitly
+manager = SimulationManager.from_template(
+    "/path/to/custom_namd.json", folder="run", title="mol", xyz="mol.xyz"
+)
+```
+
+### Template file format
+
+Templates are plain JSON files with this structure:
+
+```json
+{
+  "description": "Human-readable description",
+  "mode": "namd",
+  "sections": {
+    "input":   { "functional": "bhhlyp", "basis": "6-31G*", "method": "tdhf", "charge": 0 },
+    "scf":     { "type": "rohf", "multiplicity": 3, "converger_type": "soscf", "conv": "1e-8" },
+    "tdhf":    { "type": "mrsf", "nstate": 5 },
+    "dftgrid": { "rad_npts": 96, "ang_npts": 302, "pruned": "" },
+    "properties": { "export": true, "nac": "nacme", "back_door": true, "grad": 5 },
+    "nac": {}
+  },
+  "namd": {
+    "control":  { "qc_ncpu": 16, "jobtype": "md", "qm": "openqp", "abinit": "openqp" },
+    "molecule": { "ci": 5, "spin": 0, "coupling": "1 2, 1 3, 2 3" },
+    "openqp":   { "threads": 16, "use_hpc": -1, "align_mo": 1 },
+    "md": {
+      "step": 5000, "size": 20.67, "root": 2,
+      "sfhp": "fssh", "nactype": "dcm", "deco": "OFF",
+      "substep": 20, "initcond": 0, "randvelo": 0
+    }
+  }
+}
+```
+
+The `namd` block is only required for `namd` and `namd_qmmm` modes.
+You can omit any key — missing keys fall back to the built-in template defaults.
 
 ---
 

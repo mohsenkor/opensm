@@ -6,22 +6,30 @@
       "functional": "bhhlyp",
       "basis": "6-31g*",
       "method": "tdhf",
-      "qmmm_flag": true
-    },
-    "scf": {
-      "type": "rohf",
-      "maxit": 100,
-      "multiplicity": 1
+      "qmmm_flag": true,
+      "charge": 0
     },
     "guess": {
       "type": "huckel"
     },
-    "dftgrid": {
-      "rad_type": "becke"
+    "scf": {
+      "type": "rohf",
+      "maxit": 200,
+      "multiplicity": 3,
+      "conv": "1e-8"
     },
     "tdhf": {
       "type": "mrsf",
-      "nstate": 6
+      "nstate": 6,
+      "maxit": 100,
+      "maxit_zv": 200,
+      "nvdav": 100,
+      "zvconv": "1.0e-10"
+    },
+    "dftgrid": {
+      "rad_npts": 96,
+      "ang_npts": 302,
+      "pruned": ""
     },
     "qmmm": {
       "pdb_file": "",

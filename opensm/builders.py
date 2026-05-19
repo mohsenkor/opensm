@@ -3,8 +3,18 @@ Input file builders for OpenQP and PyRAI2MD.
 """
 
 import os
+import importlib.util
+from pathlib import Path
 
 from .utils import xyz_to_system_block
+
+
+def _find_oqp_path():
+    """Return the oqp package directory, or '' if not found."""
+    spec = importlib.util.find_spec("oqp")
+    if spec is not None and spec.origin is not None:
+        return str(Path(spec.origin).parent)
+    return ""
 
 
 def sections_to_inp(sections, xyz=None):
@@ -27,8 +37,11 @@ def namd_dict_to_control(namd_params, title):
     """
     Convert the namd dict → PyRAI2MD control file content.
 
-    The 'openqp' key in &openqp section is auto-filled from
-    the $OPENQP_ROOT environment variable if not set explicitly.
+    The 'openqp' key in &openqp is resolved in this order:
+      1. Explicit value already set in namd_params
+      2. oqp package directory (auto-detected via importlib)
+      3. $OPENQP_ROOT environment variable
+    Raises EnvironmentError if none of the above succeeds.
     """
     section_order = ["control", "molecule", "openqp", "md"]
     section_labels = {
@@ -37,8 +50,6 @@ def namd_dict_to_control(namd_params, title):
         "openqp": "&openqp",
         "md": "&MD",
     }
-
-    openqp_root = os.environ.get("OPENQP_ROOT", "")
 
     lines = []
     for sec in section_order:
@@ -56,14 +67,17 @@ def namd_dict_to_control(namd_params, title):
                 value = str(value).lower()
 
             if sec == "openqp" and key == "openqp" and (value == "" or value is None):
-                if openqp_root:
-                    value = openqp_root
-                else:
+                value = (
+                    _find_oqp_path()
+                    or os.environ.get("OPENQP_ROOT", "")
+                )
+                if not value:
                     raise EnvironmentError(
-                        "OpenQP path not set. Either:\n"
-                        "  1. Set the $OPENQP_ROOT environment variable, or\n"
-                        "  2. Pass it explicitly:\n"
-                        '     manager.set_namd_config("openqp", "openqp", "/path/to/openqp")'
+                        "Cannot locate the oqp package. Either:\n"
+                        "  1. Install OpenQP via pip (pip install pyopenqp), or\n"
+                        "  2. Set the $OPENQP_ROOT environment variable, or\n"
+                        "  3. Pass the path explicitly:\n"
+                        '     manager.set_namd_config("openqp", "openqp", "/path/to/oqp")'
                     )
 
             if value == "" or value is None:
