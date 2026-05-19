@@ -710,7 +710,7 @@ class SimulationManager:
     def absorption_spectrum(
         self, base_folder=None, initial_state=1,
         e_min=None, e_max=None, npts=5000, sigma=0.15,
-        output_dir=None, plot=True, figsize=(9, 5.5),
+        output_dir=None, plot=True, figsize=(9, 5.5), x_unit="eV",
     ):
         """Read results and build state-resolved absorption spectrum.
         See opensm.spectrum.absorption_spectrum() for full parameter docs."""
@@ -718,7 +718,7 @@ class SimulationManager:
         result = _spectrum.absorption_spectrum(
             base_folder=base, initial_state=initial_state,
             e_min=e_min, e_max=e_max, npts=npts, sigma=sigma,
-            output_dir=output_dir, plot=plot, figsize=figsize,
+            output_dir=output_dir, plot=plot, figsize=figsize, x_unit=x_unit,
         )
         self._save_workflow("absorption_spectrum", {
             "all_transitions": {str(k): v for k, v in result["all_transitions"].items()},
@@ -735,7 +735,8 @@ class SimulationManager:
 
     def select_wigner_window(
         self, geom_file=None, velo_file=None, all_transitions=None,
-        e_min=None, e_max=None, target_state=None, output_dir=None,
+        e_min=None, e_max=None, w_min=None, w_max=None,
+        target_state=None, output_dir=None,
     ):
         """Filter Wigner samples by an energy window.
 
@@ -749,8 +750,10 @@ class SimulationManager:
         ----------
         geom_file, velo_file : str or Path, optional
         all_transitions : dict, optional
-        e_min, e_max : float
-            Energy window in eV (required).
+        e_min, e_max : float, optional
+            Energy window in eV.
+        w_min, w_max : float, optional
+            Wavelength window in nm (alternative to e_min/e_max).
         target_state : int, optional
         output_dir : str or Path, optional
 
@@ -772,13 +775,16 @@ class SimulationManager:
             if wf is None:
                 raise ValueError("all_transitions not provided and no absorption_spectrum in workflow")
             all_transitions = wf["all_transitions"]
-        if e_min is None or e_max is None:
-            raise ValueError("e_min and e_max are required — choose from the absorption spectrum plot")
+        if e_min is None and e_max is None and w_min is None and w_max is None:
+            raise ValueError(
+                "Provide an energy window: e_min/e_max (eV) or w_min/w_max (nm)."
+            )
 
         result = _spectrum.select_wigner_window(
             geom_file=geom_file, velo_file=velo_file,
             all_transitions=all_transitions,
-            e_min=e_min, e_max=e_max, target_state=target_state,
+            e_min=e_min, e_max=e_max, w_min=w_min, w_max=w_max,
+            target_state=target_state,
             output_dir=output_dir or self.folder,
         )
         self._save_workflow("selected", {

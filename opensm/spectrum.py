@@ -11,6 +11,8 @@ import numpy as np
 from copy import deepcopy
 from pathlib import Path
 
+EV_TO_NM = 1239.84193  # hc in eV·nm: λ(nm) = EV_TO_NM / E(eV)
+
 from .builders import sections_to_inp
 from .engines import OpenQPEngine
 from .parsers import read_xyz_frames, read_velo_frames, read_openqp_transitions
@@ -236,6 +238,7 @@ def absorption_spectrum(
     output_dir=None,
     plot=True,
     figsize=(9, 5.5),
+    x_unit="eV",
 ):
     """
     Read OpenQP log files and build a state-resolved, Gaussian-broadened
@@ -264,6 +267,9 @@ def absorption_spectrum(
         Save a PNG plot (default True).
     figsize : tuple
         Figure size (default (9, 5.5)).
+    x_unit : str
+        X-axis unit for the plot: ``'eV'`` (default) or ``'nm'``.
+        The energy grid and filtering always use eV internally.
 
     Returns
     -------
@@ -415,40 +421,52 @@ def absorption_spectrum(
             matplotlib.use("Agg")
             import matplotlib.pyplot as plt
 
-            # Color palette for up to 10 states
             colors = [
                 "#e63946", "#457b9d", "#2a9d8f", "#e9c46a", "#f4a261",
                 "#264653", "#a855f7", "#ef4444", "#06b6d4", "#84cc16",
             ]
+
+            # Build x-axis; for nm reverse so wavelength increases left→right
+            use_nm = x_unit.lower() == "nm"
+            if use_nm:
+                x_plot = EV_TO_NM / e_grid[::-1]
+                def _flip(arr): return arr[::-1]
+                x_label = "Wavelength (nm)"
+                x_lim = (EV_TO_NM / e_max, EV_TO_NM / e_min)
+            else:
+                x_plot = e_grid
+                def _flip(arr): return arr
+                x_label = "Excitation energy (eV)"
+                x_lim = (e_min, e_max)
 
             fig, ax = plt.subplots(figsize=figsize)
 
             for i, fstate in enumerate(final_states):
                 color = colors[i % len(colors)]
                 ax.plot(
-                    e_grid, state_spectra[fstate],
+                    x_plot, _flip(state_spectra[fstate]),
                     linewidth=1.6, color=color,
                     label=f"State {initial_state} \u2192 {fstate}",
                 )
                 ax.fill_between(
-                    e_grid, state_spectra[fstate],
+                    x_plot, _flip(state_spectra[fstate]),
                     alpha=0.08, color=color,
                 )
 
             ax.plot(
-                e_grid, total_spectrum,
+                x_plot, _flip(total_spectrum),
                 linewidth=2.8, linestyle="--", color="#1e293b",
                 label="Total",
             )
 
-            ax.set_xlabel("Excitation energy (eV)", fontsize=12)
+            ax.set_xlabel(x_label, fontsize=12)
             ax.set_ylabel("Normalized absorption intensity", fontsize=12)
             ax.set_title(
                 f"State-resolved absorption spectrum "
                 f"({n_converged} samples, \u03c3 = {sigma} eV)",
                 fontsize=13,
             )
-            ax.set_xlim(e_min, e_max)
+            ax.set_xlim(x_lim)
             ax.set_ylim(bottom=0)
             ax.legend(frameon=False, fontsize=10)
             fig.tight_layout()
@@ -478,13 +496,18 @@ def select_wigner_window(
     geom_file,
     velo_file,
     all_transitions,
-    e_min,
-    e_max,
+    e_min=None,
+    e_max=None,
+    w_min=None,
+    w_max=None,
     target_state=None,
     output_dir=".",
 ):
     """
     Filter Wigner samples by an energy window in the absorption spectrum.
+
+    Specify the window either in eV (``e_min``/``e_max``) or in wavelength
+    nm (``w_min``/``w_max``).  If both are given, eV values take precedence.
 
     Parameters
     ----------
@@ -492,8 +515,11 @@ def select_wigner_window(
         Wigner geometry and velocity files.
     all_transitions : dict
         {sample_idx: [(E_eV, osc, fstate), ...]}.
-    e_min, e_max : float
+    e_min, e_max : float, optional
         Energy window in eV.
+    w_min, w_max : float, optional
+        Wavelength window in nm (converted to eV internally:
+        lower nm → higher eV, so w_min corresponds to e_max).
     target_state : int, optional
         Only consider transitions to this final state.
     output_dir : str or Path
@@ -505,6 +531,16 @@ def select_wigner_window(
         geom_file, velo_file, n_selected, n_total,
         selected_indices, selected_transitions.
     """
+    # Resolve window: nm takes effect only when eV values are not provided
+    if e_min is None and e_max is None:
+        if w_min is None or w_max is None:
+            raise ValueError("Provide either (e_min, e_max) in eV or (w_min, w_max) in nm.")
+        # λ(nm) = EV_TO_NM / E(eV)  →  smaller λ = larger E
+        e_min = EV_TO_NM / w_max
+        e_max = EV_TO_NM / w_min
+    elif e_min is None or e_max is None:
+        raise ValueError("Provide both e_min and e_max (or both w_min and w_max).")
+
     geom_frames = read_xyz_frames(geom_file)
     velo_frames = read_velo_frames(velo_file)
 
@@ -523,7 +559,10 @@ def select_wigner_window(
     n_selected = len(selected_indices)
     n_total = len(all_transitions)
 
-    print(f"Energy window: [{e_min:.2f}, {e_max:.2f}] eV"
+    _window_str = f"[{e_min:.2f}, {e_max:.2f}] eV"
+    if w_min is not None and w_max is not None:
+        _window_str += f"  /  [{w_min:.1f}, {w_max:.1f}] nm"
+    print(f"Energy window: {_window_str}"
           + (f" (state {target_state})" if target_state else ""))
     print(f"  Selected {n_selected} / {n_total} samples")
 

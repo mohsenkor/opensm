@@ -42,7 +42,8 @@ bk1*
 *.velocity
 *.init
 
-# Allow pyproject.toml and the package templates
+# Allow install script and package templates
+!install.sh
 !opensm/templates/*.json
 
 # IDE / OS
@@ -53,4 +54,5 @@ bk1*
 .DS_Store
 
 # Claude Code session data
+opensm/session
 opensm/session/

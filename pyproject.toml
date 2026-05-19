@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "opensm"
@@ -27,6 +27,8 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "PyRAI2MD @ git+https://github.com/mlcclab/PyRAI2MD-hiam.git",
+    "geodesic_interpolate @ git+https://github.com/virtualzx-nad/geodesic-interpolate.git",
 ]
 
 [project.optional-dependencies]
